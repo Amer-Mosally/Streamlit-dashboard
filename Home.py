@@ -8,8 +8,6 @@ import database as db
 
 
 
-import pickle
-from pathlib import Path
 
 import pandas as pd  # pip install pandas openpyxl
 import plotly.express as px  # pip install plotly-express
