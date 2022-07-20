@@ -18,8 +18,7 @@ usernames = [user["key"] for user in users]
 names = [user["name"] for user in users]
 hashed_passwords = [user["password"] for user in users]
 
-authenticator = stauth.Authenticate(names, usernames, hashed_passwords,
-    "Safseer-LoRa", "abcdef", cookie_expiry_days=1)
+authenticator = stauth.Authenticate(names, usernames, hashed_passwords, "Safseer-LoRa", "abcdef")
 
 name, authentication_status, username = authenticator.login("Login", "main")
 
