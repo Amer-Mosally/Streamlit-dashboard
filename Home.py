@@ -31,9 +31,11 @@ if authentication_status == None:
 
 if authentication_status:
     # ---- READ EXCEL ----
-    authenticator.logout("Logout", "main") #logout button on the main body not "sidebar"
 
     st.title(f"Welcome {name}")
+    #authenticator.logout("Logout", "main") #logout button on the main body not "sidebar"
+
+
     #horizontal menu
     selected = option_menu(None, ["Dashboard", "Log",],
         icons=['display', 'cloud-fill'],
@@ -110,3 +112,5 @@ if authentication_status:
             columns=('Node %d' % i for i in range(20)))
 
         st.dataframe(df)  # Same as st.write(df)
+
+    authenticator.logout("Logout", "main")

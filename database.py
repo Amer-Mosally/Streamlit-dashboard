@@ -5,7 +5,8 @@ from deta import Deta
 from dotenv import load_dotenv  # pip install python-dotenv
 
 # Initialize with a project key
-DETA_KEY = "c0cgros3_HYJZ6gQWM49gLK5gJNRCtpBf5B8jUv6E"
+load_dotenv(".env")
+DETA_KEY = os.getenv("DETA_KEY")
 
 # Initialize with a project key
 deta = Deta(DETA_KEY)
