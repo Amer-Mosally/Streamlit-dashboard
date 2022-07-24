@@ -31,11 +31,9 @@ if authentication_status == None:
 
 if authentication_status:
     # ---- READ EXCEL ----
+    df = pd.read_csv('Test2.csv')
 
     st.title(f"Welcome {name}")
-    #authenticator.logout("Logout", "main") #logout button on the main body not "sidebar"
-
-
     #horizontal menu
     selected = option_menu(None, ["Dashboard", "Log",],
         icons=['display', 'cloud-fill'],
@@ -51,15 +49,29 @@ if authentication_status:
         st.title(f"{selected}")
         st.write("###")   # extra line to separate
 
-        genre = st.radio(
+        selectedNode = st.radio(
             "Select Node:",
-            ('Node 1', 'Node 2', 'Node 3'))
+            df["ID"].drop_duplicates())
 
         st.write("#")
 
+        # Select the choosen node
+        df2 = df.query(f"ID == {selectedNode}")
+        st.write(df2.iloc[-2:-1])# the one before the last
+        st.write(df2.iloc[-1:])  # the one  the last
+
+        st.write(df2.iloc[-2:-1,2:3])
+        st.write(df2.iloc[-1]['Temperature'] - df2.iloc[-2]['Temperature'])
+
+        # Get the recent reading
+        df2['Date'] = pd.to_datetime(df2['Date'])
+        most_recent_date = df2['Date'].max()
+
+        st.write(most_recent_date)
+
         col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Recent Timestamp", "10:30 Pm")
-        col2.metric("Temperature", "70 °F", "1.2 °F")
+        col1.metric(f"Recent Reading (Node {selectedNode})", f"{most_recent_date}")
+        col2.metric("Temperature", "70 °C", f"{df2.iloc[-1]['Temperature'] - df2.iloc[-2]['Temperature']} °C")
         col3.metric("Humidity", "86%", "4%")
         col4.metric("Battery", "95%", "-5%")
 
@@ -90,27 +102,15 @@ if authentication_status:
 
     #*******
     if selected =="Log":
-        st.title(f"Raw data")
+        st.title(f"Logging")
+        st.write("HERE put select the node")
 
-
-        @st.cache
-        def load_data(nrows):
-            data = pd.read_csv(DATA_URL, nrows=nrows)
-            lowercase = lambda x: str(x).lower()
-            data.rename(lowercase, axis='columns', inplace=True)
-            data[DATE_COLUMN] = pd.to_datetime(data[DATE_COLUMN])
-            return data
+        data = df.iloc[:,:]
 
         data_load_state = st.text('Loading data...')
-        data = load_data(10000)
         data_load_state.text("")
-
         st.write(data)
 
-        df = pd.DataFrame(
-            np.random.randn(50, 20),
-            columns=('Node %d' % i for i in range(20)))
-
-        st.dataframe(df)  # Same as st.write(df)
+        st.markdown("`Data Units`: **Temperature (°C)**,  **Humidity (%)**,  **Battery (%)**")
 
     authenticator.logout("Logout", "main")

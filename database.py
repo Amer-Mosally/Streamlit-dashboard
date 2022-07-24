@@ -1,6 +1,5 @@
 import os
 
-import deta
 from deta import Deta
 from dotenv import load_dotenv  # pip install python-dotenv
 
