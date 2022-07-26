@@ -70,7 +70,7 @@ if authentication_status:
         #st.write(df2.iloc[-1:])                # last read
 
         # Get the recent reading
-        df2['Date'] = pd.to_datetime(df2['Date'])
+        #df2['Date'] = pd.to_datetime(df2['Date'])
         most_recent_date = df2['Date'].max()
 
         col1, col2, col3, col4 = st.columns(4)
@@ -81,9 +81,16 @@ if authentication_status:
 
         st.write("###")  # extra line to separate
 
-        d = st.date_input( "Select Date:")
+        selectedDate = st.date_input( "Select Date:")
 
         st.write("###")  # extra line to separate
+
+
+
+
+
+
+
 
         @st.cache
         def load_data(nrows):
@@ -97,7 +104,10 @@ if authentication_status:
 
         st.subheader('Temperature per hour')
         hist_values = np.histogram(data[DATE_COLUMN].dt.hour, bins=24, range=(0, 24))[0]
+
         st.bar_chart(hist_values)
+
+
 
         st.subheader('Nodes Temperature per hour')
         chart_data = pd.DataFrame(np.random.randn(25, 3) , columns=['Node 1', 'Node 2', 'Node 3'])
