@@ -1,3 +1,4 @@
+import altair
 import streamlit as st
 
 from streamlit_option_menu import option_menu
@@ -6,10 +7,9 @@ import numpy as np
 import streamlit_authenticator as stauth
 import database as db
 
-
 # emojis: https://www.webfx.com/tools/emoji-cheat-sheet/
 # Insted of :bar_chart: >>> put safseer logo
-st.set_page_config(page_title="Safseer", page_icon=":bar_chart:", layout="wide")
+st.set_page_config(page_title="Safseer", page_icon=":bar_chart:") #, layout="wide"
 
 # --- USER AUTHENTICATION ---
 users = db.fetch_all_users()
@@ -41,7 +41,7 @@ if authentication_status == None:
 
 if authentication_status:
     # If log in successfully
-    df = pd.read_csv('Test2.csv')
+    df = pd.read_csv('Test3.csv')
 
     st.title(f"Welcome {name}")
     #horizontal menu
@@ -49,7 +49,7 @@ if authentication_status:
         icons=['display', 'cloud-fill'],
         menu_icon="cast", default_index=0, orientation="horizontal")
 
-    DATE_COLUMN = 'date/time'
+    DATE_COLUMN = 'Date'
     DATA_URL = ('https://s3-us-west-2.amazonaws.com/'
                     'streamlit-demo-data/uber-raw-data-sep14.csv.gz')
 
@@ -82,30 +82,62 @@ if authentication_status:
         st.write("###")  # extra line to separate
 
         selectedDate = st.date_input( "Select Date:")
-
         st.write("###")  # extra line to separate
-
-
-
-
-
-
 
 
         @st.cache
         def load_data(nrows):
-            data = pd.read_csv(DATA_URL, nrows=nrows)
+            data = pd.read_csv('test3.csv', nrows=nrows)
             lowercase = lambda x: str(x).lower()
             data.rename(lowercase, axis='columns', inplace=True)
-            data[DATE_COLUMN] = pd.to_datetime(data[DATE_COLUMN])
+            data[DATE_COLUMN] = pd.to_datetime(df2['Date'])
             return data
+        data = load_data(1000)
 
-        data = load_data(10000)
+        st.write(selectedDate)
+
+        st.write(df2)
+
+        #df['date'] = pd.to_datetime(df2[f'[{selectedDate}]'], format='%Y-%m-%d')
+        df3 = df.query("ID == @selectedNode & Date == @selectedDate")
+        st.write(df3)
+
+
+        df3 = df2.reset_index().set_index('Date')
+        df3 = df3.loc[selectedDate]
+        st.write(selectedDate)
+        st.write(df3)
+
+        source = pd.DataFrame({
+            'Temperature ': df2['Temperature'],
+            'Hour ': data[DATE_COLUMN].dt.hour
+        })
+        bar_chart = altair.Chart(source).mark_bar().encode(
+            y='Temperature ',
+            x='Hour '
+        )
+        st.altair_chart(bar_chart, use_container_width=True)
+
+        st.write(data[DATE_COLUMN].dt.hour)
+        st.write(data[DATE_COLUMN].dt.date)
+        st.bar_chart(df2['Temperature'])
+
+        "Energy Costs By Month"
+        chart_data = pd.DataFrame(
+            df2['Temperature'],
+            df2['Date'])
+
+        st.bar_chart(chart_data)
+
+        st.bar_chart(df2['Temperature'])
 
         st.subheader('Temperature per hour')
         hist_values = np.histogram(data[DATE_COLUMN].dt.hour, bins=24, range=(0, 24))[0]
 
+        st.write(df2['Battery'])
         st.bar_chart(hist_values)
+
+
 
 
 
@@ -126,7 +158,7 @@ if authentication_status:
         data = df2.loc[:,:] # Will show only the selected node
         st.write(data)
 
-        with open('test2.csv') as f:
+        with open('test3.csv') as f:
             st.download_button(label='Download All Data', data=f, file_name='Amer.csv')  # Defaults to 'text/plain'
 
         data_load_state = st.text('Loading data...')
