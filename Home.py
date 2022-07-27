@@ -7,6 +7,7 @@ import numpy as np
 import streamlit_authenticator as stauth
 import database as db
 
+
 # emojis: https://www.webfx.com/tools/emoji-cheat-sheet/
 # Insted of :bar_chart: >>> put safseer logo
 st.set_page_config(page_title="Safseer", page_icon=":bar_chart:") #, layout="wide"
@@ -41,6 +42,10 @@ if authentication_status == None:
 
 if authentication_status:
     # If log in successfully
+    # df = all the file
+    # df2 = the selected node
+    # df3 = the selected node for a certain date
+
     df = pd.read_csv('Test3.csv')
 
     st.title(f"Welcome {name}")
@@ -94,48 +99,29 @@ if authentication_status:
             return data
         data = load_data(1000)
 
-        st.write(selectedDate)
-
         st.write(df2)
 
-        #df['date'] = pd.to_datetime(df2[f'[{selectedDate}]'], format='%Y-%m-%d')
-        df3 = df.query("ID == @selectedNode & Date == @selectedDate")
+        selectedDate = str(selectedDate)                    # Convert the date to string
+        df3 = df2.query("Date == @selectedDate")
         st.write(df3)
 
 
-        df3 = df2.reset_index().set_index('Date')
-        df3 = df3.loc[selectedDate]
-        st.write(selectedDate)
-        st.write(df3)
-
+        #*******************
         source = pd.DataFrame({
-            'Temperature ': df2['Temperature'],
-            'Hour ': data[DATE_COLUMN].dt.hour
+            'Temperature ': df3['Temperature'],
+            'Hour ': df3['Time'],
         })
         bar_chart = altair.Chart(source).mark_bar().encode(
             y='Temperature ',
             x='Hour '
         )
-        st.altair_chart(bar_chart, use_container_width=True)
+        st.altair_chart(bar_chart+bar_chart, use_container_width=True)
+        #*******************
 
-        st.write(data[DATE_COLUMN].dt.hour)
-        st.write(data[DATE_COLUMN].dt.date)
-        st.bar_chart(df2['Temperature'])
+        #st.bar_chart(df3['Temperature'])
 
-        "Energy Costs By Month"
-        chart_data = pd.DataFrame(
-            df2['Temperature'],
-            df2['Date'])
 
-        st.bar_chart(chart_data)
 
-        st.bar_chart(df2['Temperature'])
-
-        st.subheader('Temperature per hour')
-        hist_values = np.histogram(data[DATE_COLUMN].dt.hour, bins=24, range=(0, 24))[0]
-
-        st.write(df2['Battery'])
-        st.bar_chart(hist_values)
 
 
 
@@ -144,6 +130,11 @@ if authentication_status:
         st.subheader('Nodes Temperature per hour')
         chart_data = pd.DataFrame(np.random.randn(25, 3) , columns=['Node 1', 'Node 2', 'Node 3'])
         st.line_chart(chart_data)
+
+
+
+
+
 
     #*******
     if selected =="Log":
