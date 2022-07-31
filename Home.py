@@ -47,7 +47,7 @@ if authentication_status:
     # df2 = the selected node
     # df3 = the selected node for a certain date
 
-    df = pd.read_csv('Test3.csv')
+    df = pd.read_csv('Test4.csv')
 
     st.title(f"Welcome {name}")
     #horizontal menu
@@ -93,7 +93,7 @@ if authentication_status:
 
         @st.cache
         def load_data(nrows):
-            data = pd.read_csv('test3.csv', nrows=nrows)
+            data = pd.read_csv('test4.csv', nrows=nrows)
             lowercase = lambda x: str(x).lower()
             data.rename(lowercase, axis='columns', inplace=True)
             data[DATE_COLUMN] = pd.to_datetime(df2['Date'])
@@ -128,9 +128,9 @@ if authentication_status:
 
 
 
-        st.subheader('Nodes Temperature per hour')
-        chart_data = pd.DataFrame(df.loc[:,"Temperature"] , )
-        st.line_chart(chart_data)
+        #st.subheader('Nodes Temperature per hour')
+        #chart_data = pd.DataFrame(df2.loc[:,"Temperature"] , )
+        #st.line_chart(chart_data)
 #####
 
 
@@ -145,25 +145,25 @@ if authentication_status:
         st.write(df.loc[:,["ID","Date","Temperature"]])  # delete
 
         def get_data():
-            source = df.loc[:,["ID","Date","Temperature"]]       # df.loc[:,["ID","Date","Temperature"]]
+            source = df       # df.loc[:,["ID","Date","Temperature"]]
             return source
 
 
         def get_chart(data):
             hover = alt.selection_single(
-                fields=["Date"],
+                fields=["ID"], # OR Date
                 nearest=True,
                 on="mouseover",
                 empty="none",
             )
 
             lines = (
-                alt.Chart(data, title="Evolution of stock prices")
+                alt.Chart(data, title="Nodes Temperature")
                 .mark_line()
                 .encode(
                     x="Date",
                     y="Temperature",
-                    color="ID",
+                    color="Name",
                     # strokeDash="symbol",
                 )
             )
@@ -243,7 +243,7 @@ if authentication_status:
 
         st.markdown("`Data Units`: **Temperature (°C)**,  **Humidity (%)**,  **Battery (%)**")
 
-        with open('test3.csv') as f:
+        with open('test4.csv') as f:
             st.download_button(label='Download All Data', data=f, file_name='Amer.csv')  # Defaults to 'text/plain'
 
     authenticator.logout("Logout", "main")
