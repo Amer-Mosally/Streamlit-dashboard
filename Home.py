@@ -1,4 +1,4 @@
-import altair
+import altair as alt
 import streamlit as st
 
 from streamlit_option_menu import option_menu
@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import streamlit_authenticator as stauth
 import database as db
+from vega_datasets import data as dataSet
 
 
 # emojis: https://www.webfx.com/tools/emoji-cheat-sheet/
@@ -99,11 +100,11 @@ if authentication_status:
             return data
         data = load_data(1000)
 
-        st.write(df2)
+        st.write(df2) # delete
 
         selectedDate = str(selectedDate)                    # Convert the date to string
         df3 = df2.query("Date == @selectedDate")
-        st.write(df3)
+        st.write(df3) # delete
 
 
         #*******************
@@ -111,7 +112,7 @@ if authentication_status:
             'Temperature ': df3['Temperature'],
             'Hour ': df3['Time'],
         })
-        bar_chart = altair.Chart(source).mark_bar().encode(
+        bar_chart = alt.Chart(source).mark_bar().encode(
             y='Temperature ',
             x='Hour '
         )
@@ -122,14 +123,96 @@ if authentication_status:
 
 
 
-
+        st.write(df.loc[:,"Temperature"])
 
 
 
 
         st.subheader('Nodes Temperature per hour')
-        chart_data = pd.DataFrame(np.random.randn(25, 3) , columns=['Node 1', 'Node 2', 'Node 3'])
+        chart_data = pd.DataFrame(df.loc[:,"Temperature"] , )
         st.line_chart(chart_data)
+#####
+
+
+
+
+
+
+
+
+
+        st.write(dataSet.stocks())
+        st.write(df.loc[:,["ID","Date","Temperature"]])  # delete
+
+        def get_data():
+            source = df.loc[:,["ID","Date","Temperature"]]       # df.loc[:,["ID","Date","Temperature"]]
+            return source
+
+
+        def get_chart(data):
+            hover = alt.selection_single(
+                fields=["Date"],
+                nearest=True,
+                on="mouseover",
+                empty="none",
+            )
+
+            lines = (
+                alt.Chart(data, title="Evolution of stock prices")
+                .mark_line()
+                .encode(
+                    x="Date",
+                    y="Temperature",
+                    color="ID",
+                    # strokeDash="symbol",
+                )
+            )
+
+            # Draw points on the line, and highlight based on selection
+            points = lines.transform_filter(hover).mark_circle(size=65)
+
+            # Draw a rule at the location of the selection
+            tooltips = (
+                alt.Chart(data)
+                .mark_rule()
+                .encode(
+                    x="Date",
+                    y="Temperature",
+                    opacity=alt.condition(hover, alt.value(0.3), alt.value(0)),
+                    tooltip=[
+                        alt.Tooltip("Date", title="Date"),
+                        alt.Tooltip("Temperature", title="Temperature (C)"),
+                    ],
+                )
+                .add_selection(hover)
+            )
+
+            return (lines + points + tooltips).interactive()
+
+
+
+        # Original time series chart. Omitted `get_chart` for clarity
+        source = get_data()
+        chart = get_chart(source)
+
+
+
+        # Display both charts together
+        st.altair_chart((chart).interactive(), use_container_width=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -149,12 +232,18 @@ if authentication_status:
         data = df2.loc[:,:] # Will show only the selected node
         st.write(data)
 
-        with open('test3.csv') as f:
-            st.download_button(label='Download All Data', data=f, file_name='Amer.csv')  # Defaults to 'text/plain'
+
+        selectedDate = st.date_input("Select Date:")
+        selectedDate = str(selectedDate)                    # Convert the date to string
+        df3 = df2.query("Date == @selectedDate")
+        st.write(df3)
 
         data_load_state = st.text('Loading data...')
         data_load_state.text("")
 
         st.markdown("`Data Units`: **Temperature (°C)**,  **Humidity (%)**,  **Battery (%)**")
+
+        with open('test3.csv') as f:
+            st.download_button(label='Download All Data', data=f, file_name='Amer.csv')  # Defaults to 'text/plain'
 
     authenticator.logout("Logout", "main")
