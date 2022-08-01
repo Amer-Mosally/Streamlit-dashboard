@@ -1,16 +1,12 @@
 import altair as alt
 import streamlit as st
-
 from streamlit_option_menu import option_menu
 import pandas as pd
-import numpy as np
 import streamlit_authenticator as stauth
 import database as db
-from vega_datasets import data as dataSet
-
 
 # emojis: https://www.webfx.com/tools/emoji-cheat-sheet/
-# Insted of :bar_chart: >>> put safseer logo
+# Insted of :bar_chart: >>> put safseer logo # Delete
 st.set_page_config(page_title="Safseer", page_icon=":bar_chart:") #, layout="wide"
 
 # --- USER AUTHENTICATION ---
@@ -31,38 +27,29 @@ if authentication_status == False:
 if authentication_status == None:
     st.warning("Please enter your username and password")
 
-
-
-
-
-
-
-
-
-
+# ******************* #
+    # After Login #
 
 if authentication_status:
-    # If log in successfully
     # df = all the file
     # df2 = the selected node
     # df3 = the selected node for a certain date
 
     df = pd.read_csv('Test4.csv')
+    DATE_COLUMN = 'Date'
 
     st.title(f"Welcome {name}")
+
     #horizontal menu
     selected = option_menu(None, ["Dashboard", "Log",],
         icons=['display', 'cloud-fill'],
         menu_icon="cast", default_index=0, orientation="horizontal")
 
-    DATE_COLUMN = 'Date'
-    DATA_URL = ('https://s3-us-west-2.amazonaws.com/'
-                    'streamlit-demo-data/uber-raw-data-sep14.csv.gz')
+    # *******************
 
-    #*******
     if selected =="Dashboard":
         st.title(f"{selected}")
-        st.write("###")         # extra line to separate
+        st.write("###")
 
         selectedNode = st.selectbox(
             "Select Node:",
@@ -72,11 +59,8 @@ if authentication_status:
 
         # Select the chosen node
         df2 = df.query(f"ID == {selectedNode}")
-        #st.write(df2.iloc[-2:-1])              # the one before the last read
-        #st.write(df2.iloc[-1:])                # last read
 
         # Get the recent reading
-        #df2['Date'] = pd.to_datetime(df2['Date'])
         most_recent_date = df2['Date'].max()
 
         col1, col2, col3, col4 = st.columns(4)
@@ -86,10 +70,8 @@ if authentication_status:
         col4.metric("Battery", f"{df2.iloc[-1]['Battery']}%", f"{df2.iloc[-1]['Battery'] - df2.iloc[-2]['Battery']} %")
 
         st.write("###")  # extra line to separate
-
         selectedDate = st.date_input( "Select Date:")
         st.write("###")  # extra line to separate
-
 
         @st.cache
         def load_data(nrows):
@@ -100,14 +82,11 @@ if authentication_status:
             return data
         data = load_data(1000)
 
-        st.write(df2) # delete
-
         selectedDate = str(selectedDate)                    # Convert the date to string
         df3 = df2.query("Date == @selectedDate")
-        st.write(df3) # delete
 
+        # *******************
 
-        #*******************
         source = pd.DataFrame({
             'Temperature ': df3['Temperature'],
             'Hour ': df3['Time'],
@@ -117,37 +96,12 @@ if authentication_status:
             x='Hour '
         )
         st.altair_chart(bar_chart+bar_chart, use_container_width=True)
-        #*******************
 
-        #st.bar_chart(df3['Temperature'])
-
-
-
-        st.write(df.loc[:,"Temperature"])
-
-
-
-
-        #st.subheader('Nodes Temperature per hour')
-        #chart_data = pd.DataFrame(df2.loc[:,"Temperature"] , )
-        #st.line_chart(chart_data)
-#####
-
-
-
-
-
-
-
-
-
-        st.write(dataSet.stocks())
-        st.write(df.loc[:,["ID","Date","Temperature"]])  # delete
+        # *******************
 
         def get_data():
             source = df       # df.loc[:,["ID","Date","Temperature"]]
             return source
-
 
         def get_chart(data):
             hover = alt.selection_single(
@@ -156,7 +110,6 @@ if authentication_status:
                 on="mouseover",
                 empty="none",
             )
-
             lines = (
                 alt.Chart(data, title="Nodes Temperature")
                 .mark_line()
@@ -167,10 +120,8 @@ if authentication_status:
                     # strokeDash="symbol",
                 )
             )
-
             # Draw points on the line, and highlight based on selection
             points = lines.transform_filter(hover).mark_circle(size=65)
-
             # Draw a rule at the location of the selection
             tooltips = (
                 alt.Chart(data)
@@ -186,40 +137,69 @@ if authentication_status:
                 )
                 .add_selection(hover)
             )
-
             return (lines + points + tooltips).interactive()
+        # Original time series chart. Omitted `get_chart` for clarity
+        source = get_data()
+        chart = get_chart(source)
+        # Display both charts together
+        st.altair_chart((chart).interactive(), use_container_width=True)
 
+        # *******************
+        source = pd.DataFrame({
+            'Humidity ': df3['Humidity'],
+            'Hour ': df3['Time'],
+        })
+        bar_chart = alt.Chart(source).mark_bar().encode(
+            y='Humidity ',
+            x='Hour '
+        )
+        st.altair_chart(bar_chart + bar_chart, use_container_width=True)
+        # *******************
 
+        def get_chart(data):
+            hover = alt.selection_single(
+                fields=["ID"], # OR Date
+                nearest=True,
+                on="mouseover",
+                empty="none",
+            )
+            lines = (
+                alt.Chart(data, title="Nodes Humidity")
+                .mark_line()
+                .encode(
+                    x="Date",
+                    y="Humidity",
+                    color="Name",
+                    # strokeDash="symbol",
+                )
+            )
+            # Draw points on the line, and highlight based on selection
+            points = lines.transform_filter(hover).mark_circle(size=65)
+            # Draw a rule at the location of the selection
+            tooltips = (
+                alt.Chart(data)
+                .mark_rule()
+                .encode(
+                    x="Date",
+                    y="Humidity",
+                    opacity=alt.condition(hover, alt.value(0.3), alt.value(0)),
+                    tooltip=[
+                        alt.Tooltip("Date", title="Date"),
+                        alt.Tooltip("Humidity", title="Humidity (%)"),
+                    ],
+                )
+                .add_selection(hover)
+            )
+            return (lines + points + tooltips).interactive()
 
         # Original time series chart. Omitted `get_chart` for clarity
         source = get_data()
         chart = get_chart(source)
-
-
-
         # Display both charts together
         st.altair_chart((chart).interactive(), use_container_width=True)
 
+    # *******************
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    #*******
     if selected =="Log":
         st.title(f"Logging")
 
