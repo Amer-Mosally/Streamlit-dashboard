@@ -82,9 +82,7 @@ if authentication_status:
 
         @st.cache
         def load_data(nrows):
-            data = df
-            lowercase = lambda x: str(x).lower()
-            data.rename(lowercase, axis='columns', inplace=True)
+            data = pd.read_csv('test4.csv', nrows=nrows)
             data[DATE_COLUMN] = pd.to_datetime(df2['Date'])
             return data
 
