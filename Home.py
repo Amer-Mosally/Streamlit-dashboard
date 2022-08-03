@@ -82,14 +82,14 @@ if authentication_status:
 
         @st.cache
         def load_data(nrows):
-            data = pd.read_csv('test4.csv', nrows=nrows)
+            data = df
             lowercase = lambda x: str(x).lower()
             data.rename(lowercase, axis='columns', inplace=True)
             data[DATE_COLUMN] = pd.to_datetime(df2['Date'])
             return data
 
 
-        data = load_data(1000)
+        data = load_data(1000)  # $$ How Many Rows to read from the server
 
         selectedDate = str(selectedDate)  # Convert the date to string
         df3 = df2.query("Date == @selectedDate")  # @selectedDate : will call the Variable
