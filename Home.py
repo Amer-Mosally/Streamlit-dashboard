@@ -4,12 +4,16 @@ from streamlit_option_menu import option_menu
 import pandas as pd
 import streamlit_authenticator as stauth
 import database as db
+from PIL import Image
 
 # emojis: https://www.webfx.com/tools/emoji-cheat-sheet/
-# Insted of :bar_chart: >>> put safseer logo # Delete
-st.set_page_config(page_title="Safseer", page_icon=":bar_chart:") #, layout="wide"
+image_logo = Image.open('logo.png')
+image_logo_cut = Image.open('logo_cut.png')
+st.set_page_config(page_title="Safseer", page_icon=image_logo_cut, layout="wide")
+st.image(image_logo, use_column_width='auto', output_format="auto")
 
-# --- USER AUTHENTICATION ---
+# ******************* USER AUTHENTICATION ******************* #
+
 users = db.fetch_all_users()
 
 usernames = [user["key"] for user in users]
@@ -17,7 +21,7 @@ names = [user["name"] for user in users]
 hashed_passwords = [user["password"] for user in users]
 
 authenticator = stauth.Authenticate(names, usernames, hashed_passwords,
-"Safseer_LoRa", "abcdef", cookie_expiry_days=1)
+                                    "Safseer_LoRa", "abcdef", cookie_expiry_days=1)  # Will stay login for 1 day
 
 name, authentication_status, username = authenticator.login("Login", "main")
 
@@ -27,8 +31,7 @@ if authentication_status == False:
 if authentication_status == None:
     st.warning("Please enter your username and password")
 
-# ******************* #
-    # After Login #
+# ******************* After Login ******************* #
 
 if authentication_status:
     # df = all the file
@@ -40,14 +43,14 @@ if authentication_status:
 
     st.title(f"Welcome {name}")
 
-    #horizontal menu
-    selected = option_menu(None, ["Dashboard", "Log",],
-        icons=['display', 'cloud-fill'],
-        menu_icon="cast", default_index=0, orientation="horizontal")
+    # horizontal menu
+    selected = option_menu(None, ["Dashboard", "Log", ],
+                           icons=['display', 'cloud-fill'],
+                           menu_icon="cast", default_index=0, orientation="horizontal")
 
-    # *******************
+    # ******************* Dashboard ******************* #
 
-    if selected =="Dashboard":
+    if selected == "Dashboard":
         st.title(f"{selected}")
         st.write("###")
 
@@ -62,16 +65,20 @@ if authentication_status:
 
         # Get the recent reading
         most_recent_date = df2['Date'].max()
+        most_recent_time = df2['Time'].max()
 
         col1, col2, col3, col4 = st.columns(4)
-        col1.metric(f"Recent Reading (Node {selectedNode})", f"{most_recent_date}")
-        col2.metric("Temperature", f"{df2.iloc[-1]['Temperature']} °C", f"{df2.iloc[-1]['Temperature'] - df2.iloc[-2]['Temperature']} °C")
-        col3.metric("Humidity", f"{df2.iloc[-1]['Humidity']}%", f"{df2.iloc[-1]['Humidity'] - df2.iloc[-2]['Humidity']} %")
+        col1.metric(f"Recent Reading (Node {selectedNode})", f"{most_recent_date} at {most_recent_time}")
+        col2.metric("Temperature", f"{df2.iloc[-1]['Temperature']} °C",
+                    f"{df2.iloc[-1]['Temperature'] - df2.iloc[-2]['Temperature']} °C")
+        col3.metric("Humidity", f"{df2.iloc[-1]['Humidity']}%",
+                    f"{df2.iloc[-1]['Humidity'] - df2.iloc[-2]['Humidity']} %")
         col4.metric("Battery", f"{df2.iloc[-1]['Battery']}%", f"{df2.iloc[-1]['Battery'] - df2.iloc[-2]['Battery']} %")
 
         st.write("###")  # extra line to separate
-        selectedDate = st.date_input( "Select Date:")
+        selectedDate = st.date_input("Select Date:")
         st.write("###")  # extra line to separate
+
 
         @st.cache
         def load_data(nrows):
@@ -80,39 +87,44 @@ if authentication_status:
             data.rename(lowercase, axis='columns', inplace=True)
             data[DATE_COLUMN] = pd.to_datetime(df2['Date'])
             return data
+
+
         data = load_data(1000)
 
-        selectedDate = str(selectedDate)                    # Convert the date to string
-        df3 = df2.query("Date == @selectedDate")
+        selectedDate = str(selectedDate)  # Convert the date to string
+        df3 = df2.query("Date == @selectedDate")  # @selectedDate : will call the Variable
 
-        # *******************
+        # ******************* Temperature ******************* #
 
         source = pd.DataFrame({
             'Temperature ': df3['Temperature'],
             'Hour ': df3['Time'],
         })
-        bar_chart = alt.Chart(source).mark_bar().encode(
+        chart1 = alt.Chart(source).mark_bar().encode(  # OR mark_trail() ,mark_area()
             y='Temperature ',
             x='Hour '
-        )
-        st.altair_chart(bar_chart+bar_chart, use_container_width=True)
+        ).properties(width=500, height=300)
+
+
+        # chart1 = st.altair_chart(bar_chart, use_container_width=True)
 
         # *******************
 
         def get_data():
-            source = df       # df.loc[:,["ID","Date","Temperature"]]
+            source = df  # df.loc[:,["ID","Date","Temperature"]]
             return source
+
 
         def get_chart(data):
             hover = alt.selection_single(
-                fields=["ID"], # OR Date
+                fields=["ID"],  # OR Date
                 nearest=True,
                 on="mouseover",
                 empty="none",
             )
             lines = (
                 alt.Chart(data, title="Nodes Temperature")
-                .mark_line()
+                .mark_line()  # mark_area()
                 .encode(
                     x="Date",
                     y="Temperature",
@@ -138,27 +150,33 @@ if authentication_status:
                 .add_selection(hover)
             )
             return (lines + points + tooltips).interactive()
+
+
         # Original time series chart. Omitted `get_chart` for clarity
         source = get_data()
-        chart = get_chart(source)
-        # Display both charts together
-        st.altair_chart((chart).interactive(), use_container_width=True)
+        chart2 = get_chart(source).properties(width=500, height=300)
 
-        # *******************
+        # Display both charts together
+        st.altair_chart(chart1 | chart2)
+
+        # ******************* Humidity ******************* #
+
         source = pd.DataFrame({
             'Humidity ': df3['Humidity'],
             'Hour ': df3['Time'],
         })
-        bar_chart = alt.Chart(source).mark_bar().encode(
+        chart1 = alt.Chart(source).mark_bar().encode(
             y='Humidity ',
             x='Hour '
-        )
-        st.altair_chart(bar_chart + bar_chart, use_container_width=True)
+        ).properties(width=500, height=300)
+
+
+        # st.altair_chart(bar_chart + bar_chart, use_container_width=True)
         # *******************
 
         def get_chart(data):
             hover = alt.selection_single(
-                fields=["ID"], # OR Date
+                fields=["ID"],  # OR Date
                 nearest=True,
                 on="mouseover",
                 empty="none",
@@ -192,15 +210,18 @@ if authentication_status:
             )
             return (lines + points + tooltips).interactive()
 
+
         # Original time series chart. Omitted `get_chart` for clarity
         source = get_data()
-        chart = get_chart(source)
+        chart2 = get_chart(source).properties(width=500, height=300)
+        # st.altair_chart((chart).interactive(), use_container_width=True)
+
         # Display both charts together
-        st.altair_chart((chart).interactive(), use_container_width=True)
+        st.altair_chart(chart1 | chart2)
 
-    # *******************
+    # ******************* Log ******************* #
 
-    if selected =="Log":
+    if selected == "Log":
         st.title(f"Logging")
 
         selectedNode = st.selectbox(
@@ -209,12 +230,11 @@ if authentication_status:
 
         df2 = df.query(f"ID == {selectedNode}")
 
-        data = df2.loc[:,:] # Will show only the selected node
+        data = df2.loc[:, :]  # Will show only the selected node
         st.write(data)
 
-
         selectedDate = st.date_input("Select Date:")
-        selectedDate = str(selectedDate)                    # Convert the date to string
+        selectedDate = str(selectedDate)  # Convert the date to string
         df3 = df2.query("Date == @selectedDate")
         st.write(df3)
 
@@ -225,5 +245,7 @@ if authentication_status:
 
         with open('test4.csv') as f:
             st.download_button(label='Download All Data', data=f, file_name='Amer.csv')  # Defaults to 'text/plain'
+
+    # ******************* Logout ******************* #
 
     authenticator.logout("Logout", "main")
