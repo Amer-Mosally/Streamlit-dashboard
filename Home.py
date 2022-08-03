@@ -245,7 +245,7 @@ if authentication_status:
         csv = convert_df(df)
 
         flag = True
-        if username == 'admin':     # Only admin can download the file
+        if username == 'admin' or username == 'amer':     # Only admin can download the file
             flag = False
         st.download_button(label='Download All Data', data=csv, file_name='Amer.csv', disabled=flag)  # Defaults to 'text/plain'
 
