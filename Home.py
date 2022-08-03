@@ -236,8 +236,18 @@ if authentication_status:
 
         st.markdown("`Data Units`: **Temperature (°C)**,  **Humidity (%)**,  **Battery (%)**")
 
-        with open('test4.csv') as f:
-            st.download_button(label='Download All Data', data=f, file_name='Amer.csv')  # Defaults to 'text/plain'
+
+        @st.cache
+        def convert_df(df):
+            # IMPORTANT: Cache the conversion to prevent computation on every rerun
+            return df.to_csv().encode('utf-8')
+
+        csv = convert_df(df)
+
+
+        if username == 'admin':     # Only admin can download the file
+            flag = False
+        st.download_button(label='Download All Data', data=csv, file_name='Amer.csv', disabled=flag)  # Defaults to 'text/plain'
 
     # ******************* Logout ******************* #
 
